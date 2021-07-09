@@ -1,0 +1,124 @@
+1. CMakeLists.txt
+1) find_package 에 'dynamic_reconfigure' 추가하기
+find_package(catkin REQUIRED COMPONENTS
+     roscpp
+     rospy
+     ...
+     dynamic_reconfigure
+)
+
+2) catkin_package 패키지 목록에 'dynamic_reconfigure' 추가하기
+catkin_package(
+     INCLUDE_DIRS include
+     LIBRARIES dynamic_reconfigure_test
+     CATKIN_DEPENDS roscpp rospy dynamic_reconfigure
+     DEPENDS system_lib
+)
+
+2) 아래 문장 추가 -> 'cfg/test.cfg' 경로는 CMakeLists.txt 파일을 기준으로 설정
+generate_dynamic_reconfigure_options(
+     cfg/test.cfg
+)
+
+3) 실제 실행될 노드(obstacle_extractor_node) 에 의존성 추가 -> '${PROJECT_NAME}_gencfg' 
+add_dependencies(obstacle_extractor_node ${PROJECT_NAME}_gencfg)
+
+
+2. package.xml
+1) depend 태그 'dynamic_reconfigure' 의존성 추가
+<build_depend>dynamic_reconfigure</build_depend>
+<build_export_depend>dynamic_reconfigure</build_export_depend>
+<exec_depend>dynamic_reconfigure</exec_depend>
+
+
+3. config 파일
+위치: [패키지명]/cfg/obstacle.cfg 
+
+1) PACKAGE 는 현재 속해있는 패키지명을 적는다. ex) obstacle_detector
+
+2) 실시간으로 변경할 파라미터 설정
+// 변수명, type, level(=0), gui표시, 초기값, min, max
+// type : int_t, float_t, str_t, bool_t
+gen.add("min_group_point", int_t, 0, "min_group_points", 1, 0, 100)  
+
+3) generate 이름 설정
+// dynamic_parameter_n : 해당 프로그램이 실행될 노드 명 -> 그냥 PACKAGE 명으로 통
+// dynamic_parameter_h : 해당 cfg 파일이 cpp 파일에서 include될 때 필요한 헤더 명 (중요)
+// cpp 파일 헤더 부르는 법 : #include "{PACKAGE}/dynamic_parameter_hConfig.h" 
+  ->  dynamic_parameter_h + Config.h 붙이는 형식임. (결과: dynamic_parameter_hConfig.h)
+  ->  여기서 PACKAGE 는 obstacle_detector 를 뜻함.
+
+exit(gen.generate(PACKAGE, "dynamic_parameter_n", "dynamic_parameter_h"))
+exit(gen.generate(PACKAGE, "obstacle_detector", "dynamic_parameter_h"))
+
+
+4. 소스파일 수정
+// 실행될 파일의 cpp 안에서 수정해야함. ex) obstacle_extractor_node.cpp
+
+1-1) 헤더파일 선언 (기본)
+#include <ros/ros.h>
+#include <dynamic_reconfigure/server.h>
+
+1-2) 커스텀 헤더파일 추가 : cfg파일 맨 마지막줄 세번째 파라미터 (dynamic_parameter_h) + Config.h 
+#include "obstacle_detector/dynamic_parameter_hConfig.h"
+
+2) callback 함수 선언
+// config.선언한파라미터 
+void callback(obstacle_detector::dynamic_parameter_hConfig &config, uint32_t level) {
+      ROS_INFO("Dynamic parameter: %d", config.min_group_points);
+}
+
+3) main에서 callback 함수 subscribe 하는 코드 삽입
+// boost::bind(&callback, _1, _2); 에서 callback 함수는 (4-2)에서 말한 함수명과 동일
+dynamic_reconfigure::Server<obstacle_detector::dynamic_parameter_hConfig> server함;
+dynamic_reconfigure::Server<obstacle_detector::dynamic_parameter_hConfig>::CallbackType f;
+ 
+f = boost::bind(&callback, _1, _2);
+server.setCallback(f)
+
+4) 중요 - cfg파일 수정시 컴파일이 필요함. (명령어: cm)
+
+
+5. 실행
+roscore 실행 또는 roslaunch
+
+// rqt gui 설치
+sudo apt-get install ros-DISTRO-rqt-reconfigure
+
+// rqt_graph 실행
+rosrun rqt_gui rqt_gui -s reconfigure
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
