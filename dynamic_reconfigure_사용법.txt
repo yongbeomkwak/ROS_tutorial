@@ -26,7 +26,9 @@ add_dependencies(obstacle_extractor_node ${PROJECT_NAME}_gencfg)
 
 2. package.xml
 1) depend 태그 'dynamic_reconfigure' 의존성 추가
-<depend>dynamic_reconfigure</depend>
+<build_depend>dynamic_reconfigure</build_depend>
+<build_export_depend>dynamic_reconfigure</build_export_depend>
+<exec_depend>dynamic_reconfigure</exec_depend>
 
 
 3. config 파일
