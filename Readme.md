@@ -6,6 +6,7 @@
     ```python
     # 패키지명과 노드명은 동일하게 쓰는 것이 좋음. 
     PACKAGE = "dynamic_tutorials" 
+    # 패키지명, 노드명, 3rd Parameter(cpp헤더, 파이썬import에 사용됨)
     exit(gen.generate(PACKAGE, "dynamic_tutorials", "Tutorials"))
     
     # 파라미터명, 타입, Level(=0), 설명글, 초기값, MIN, MAX
